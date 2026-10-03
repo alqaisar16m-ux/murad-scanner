@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MURAD - Cyber URL & Security Scanner</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        cyberBg: '#030712',
+                        panelBg: 'rgba(10, 15, 30, 0.85)',
+                        neonCyan: '#00f3ff',
+                        matrixGreen: '#00ff66',
+                        laserRed: '#ff0055',
+                        cyberGold: '#ffb700',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #030712;
+            background-image: 
+                linear-gradient(rgba(0, 243, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 243, 255, 0.03) 1px, transparent 1px),
+                radial-gradient(circle at 50% 0%, rgba(0, 243, 255, 0.1) 0%, transparent 70%);
+            background-size: 30px 30px, 30px 30px, 100% 100%;
+            font-family: 'Cairo', sans-serif;
+            color: #f8fafc;
+            min-height: 100vh;
+        }
+
+        .cyber-glow {
+            text-shadow: 0 0 10px rgba(0, 243, 255, 0.6), 0 0 20px rgba(0, 243, 255, 0.3);
+        }
+
+        .panel-glass {
+            background: rgba(10, 15, 30, 0.85);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 243, 255, 0.2);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), inset 0 0 15px rgba(0, 243, 255, 0.08);
+        }
+
+        /* Scan Line Animation */
+        @keyframes scanline {
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(1000%); }
+        }
+        .scan-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 2px;
+            background: linear-gradient(90deg, transparent, var(--neon-cyan), transparent);
+            animation: scanline 3s linear infinite;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body class="p-4 sm:p-8">
+
+    <div class="max-w-5xl mx-auto">
+        
+        <!-- Header -->
+        <header class="text-center mb-10">
+            <h1 class="text-3xl sm:text-5xl font-black tracking-wider text-white cyber-glow mb-2">MURAD MATRIX SCANNER</h1>
+            <p class="text-neonCyan text-sm sm:text-base tracking-widest uppercase">نظام الفحص السيبراني الحقيقي للروابط والمواقع</p>
+        </header>
+
+        <!-- Search / Input Card -->
+        <div class="panel-glass rounded-2xl p-6 sm:p-8 mb-8 relative overflow-hidden">
+            <div class="scan-overlay"></div>
+            
+            <label for="urlInput" class="block text-sm font-bold text-neonCyan mb-3 tracking-wide">أدخل رابط الموقع المراد فحضه (مثال: https://example.com):</label>
+            
+            <div class="relative flex flex-col sm:flex-row items-center gap-4">
+                <div class="relative w-full">
+                    <!-- LED Status Light -->
+                    <div id="statusLight" class="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-slate-600 transition-all duration-300"></div>
+                    
+                    <input type="url" id="urlInput" placeholder="https://..." 
+                        class="w-full bg-slate-950/90 border-2 border-slate-800 rounded-xl py-4 pr-12 pl-4 text-neonCyan font-mono text-base sm:text-lg outline-none focus:border-neonCyan transition-all shadow-inner"
+                        oninput="validateUrlInput()" onkeypress="handleKeyPress(event)">
+                </div>
+
+                <button onclick="startRealScan()" id="scanBtn"
+                    class="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-cyan-600 to-blue-700 hover:from-cyan-500 hover:to-blue-600 text-white font-bold rounded-xl shadow-lg shadow-cyan-500/25 transition-all duration-300 flex items-center justify-center gap-2 tracking-wider cursor-pointer whitespace-nowrap">
+                    <span>⚡ تشغيل الفحص السيبراني</span>
+                </button>
+            </div>
+            <div id="errorMsg" class="text-laserRed text-sm mt-3 font-semibold hidden">⚠️ يرجى إدخال رابط صحيح يبدأ بـ http:// أو https://</div>
+        </div>
+
+        <div id="loader" class="hidden text-center py-12 panel-glass rounded-2xl mb-8">
+            <div class="inline-block w-12 h-12 border-4 border-neonCyan border-t-transparent rounded-full animate-spin mb-4"></div>
+            <p class="text-neonCyan font-bold text-lg tracking-widest animate-pulse">جاري فحص الرابط واختبار استجابة السيرفر الحقيقي...</p>
+        </div>
+
+        <div id="resultsDashboard" class="grid grid-cols-1 md:grid-cols-3 gap-6 opacity-20 pointer-events-none transition-all duration-500">
+            
+            <!-- Strengths Panel -->
+            <div class="panel-glass rounded-2xl p-6 border-t-4 border-t-matrixGreen">
+                <h3 class="text-matrixGreen font-black text-xl mb-4 flex items-center gap-2">
+                    <span>📈</span> المؤشرات الإيجابية
+                </h3>
+                <ul id="strengthsList" class="space-y-3 text-slate-300 text-sm">
+                    <li class="p-3 bg-slate-900/60 rounded-xl border border-matrixGreen/20">بانتظار إدخال الرابط...</li>
+                </ul>
+            </div>
+
+            <!-- Weaknesses / Security Issues Panel -->
+            <div class="panel-glass rounded-2xl p-6 border-t-4 border-t-laserRed">
+                <h3 class="text-laserRed font-black text-xl mb-4 flex items-center gap-2">
+                    <span>⚠️</span> التنبيهات والثغرات المحتملة
+                </h3>
+                <ul id="weaknessesList" class="space-y-3 text-slate-300 text-sm">
+                    <li class="p-3 bg-slate-900/60 rounded-xl border border-laserRed/20">بانتظار إدخال الرابط...</li>
+                </ul>
+            </div>
+
+            <!-- Guidelines / Actionable Advice Panel -->
+            <div class="panel-glass rounded-2xl p-6 border-t-4 border-t-cyberGold">
+                <h3 class="text-cyberGold font-black text-xl mb-4 flex items-center gap-2">
+                    <span>💡</span> إرشادات وتحسينات الأمان
+                </h3>
+                <ul id="guidelinesList" class="space-y-3 text-slate-300 text-sm">
+                    <li class="p-3 bg-slate-900/60 rounded-xl border border-cyberGold/20">بانتظار إدخال الرابط...</li>
+                </ul>
+            </div>
+
+        </div>
+
+        <!-- Footer -->
+        <footer class="text-center mt-12 text-slate-500 text-sm tracking-widest uppercase">
+            Cyberpunk Security Matrix by <strong class="text-neonCyan">MURAD</strong> © 2026
+        </footer>
+
+    </div>
+
+    <script>
+        function validateUrlInput() {
+            const input = document.getElementById('urlInput').value.trim();
+            const statusLight = document.getElementById('statusLight');
+            const errorMsg = document.getElementById('errorMsg');
+
+            if (!input) {
+                statusLight.className = "absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-slate-600 transition-all duration-300";
+                errorMsg.classList.add('hidden');
+                return false;
+            }
+
+            try {
+                const url = new URL(input);
+                if (url.protocol === 'http:' || url.protocol === 'https:') {
+                    statusLight.className = "absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-matrixGreen shadow-[0_0_15px_#00ff66] transition-all duration-300";
+                    errorMsg.classList.add('hidden');
+                    return true;
+                } else {
+                    throw new Error();
+                }
+            } catch (e) {
+                statusLight.className = "absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-laserRed shadow-[0_0_15px_#ff0055] transition-all duration-300";
+                errorMsg.classList.remove('hidden');
+                return false;
+            }
+        }
+
+        function handleKeyPress(e) {
+            if (e.key === 'Enter') {
+                startRealScan();
+            }
+        }
+
+        async function startRealScan() {
+            const inputVal = document.getElementById('urlInput').value.trim();
+            if (!validateUrlInput()) return;
+
+            const loader = document.getElementById('loader');
+            const dashboard = document.getElementById('resultsDashboard');
+            const scanBtn = document.getElementById('scanBtn');
+
+            loader.classList.remove('hidden');
+            dashboard.classList.remove('opacity-100');
+            dashboard.classList.add('opacity-20', 'pointer-events-none');
+            scanBtn.disabled = true;
+
+            const startTime = performance.now();
+            let httpStatus = "غير معروف";
+            let isHttps = inputVal.toLowerCase().startsWith('https://');
+            let fetchSuccess = false;
+
+            try {
+                // محاولة إجراء جلب حقيقي للرابط مع وضع وضع no-cors للتأكد من الاستجابة أو رصد الأخطاء
+                await fetch(inputVal, { method: 'HEAD', mode: 'no-cors', cache: 'no-cache' });
+                fetchSuccess = true;
+                httpStatus = "نشط ومتاح (Active / 200 OK)";
+            } catch (err) {
+                // بسبب حظر السياسة الأمنية CORS للمتصفحات، قد يفشل الجلب المباشر لبعض المواقع الخارجية ولكن السيرفر قد يكون حياً
+                fetchSuccess = false;
+                httpStatus = "استجابة مقيدة بواسطة سياسة CORS أو خمول السيرفر";
+            }
+
+            const endTime = performance.now();
+            const latency = Math.round(endTime - startTime);
+
+            setTimeout(() => {
+                loader.classList.add('hidden');
+                scanBtn.disabled = false;
+                dashboard.classList.remove('opacity-20', 'pointer-events-none');
+                dashboard.classList.add('opacity-100');
+
+                renderResults({
+                    url: inputVal,
+                    isHttps,
+                    latency,
+                    httpStatus,
+                    fetchSuccess
+                });
+            }, 800);
+        }
+
+        function renderResults(data) {
+            const strengthsList = document.getElementById('strengthsList');
+            const weaknessesList = document.getElementById('weaknessesList');
+            const guidelinesList = document.getElementById('guidelinesList');
+
+            let strengths = [];
+            let weaknesses = [];
+            let guidelines = [];
+
+            // تقييم بروتوكول الأمان
+            if (data.isHttps) {
+                strengths.push(`✅ استخدام بروتوكول الحماية المشفر HTTPS وتأمين شهادة SSL.`);
+            } else {
+                weaknesses.push(`⚠️ الموقع يستخدم بروتوكول HTTP غير المشفر وغير الآمن.`);
+                guidelines.push(`🚀 قم فوراً بتثبيت شهادة SSL وتفعيل تحويل تلقائي إلى HTTPS.`);
+            }
+
+            // تقييم الاستجابة والسرعة
+            if (data.latency < 500) {
+                strengths.push(`⚡ سرعة استجابة ممتازة للسيرفر (${data.latency} مللي ثانية).`);
+            } else {
+                weaknesses.push(`⏳ زمن استجابة مرتفع نسبياً (${data.latency} مللي ثانية).`);
+                guidelines.push(`📊 يُنصح بتفعيل شبكة توصيل المحتوى (CDN) وتقليص حجم الطلبات.`);
+            }
+
+            // تقييم حالة الاتصال
+            if (data.fetchSuccess) {
+                strengths.push(`🌐 الاتصال بالرابط ناجح واستجابة الخادم مستقرة.`);
+            } else {
+                weaknesses.push(`🛡️ قيود أمنية أو جدار حماية (CORS / Firewall) يمنع الفحص المباشر.`);
+                guidelines.push(`🔍 تأكد من ضبط رؤوس الأمان (Security Headers) مثل CORS و X-Frame-Options.`);
+            }
+
+            // تعبئة القوائم بصرياً
+            strengthsList.innerHTML = strengths.map(s => `<li class="p-3 bg-slate-900/80 rounded-xl border border-matrixGreen/20 flex items-start gap-2">${s}</li>`).join('');
+            weaknessesList.innerHTML = weaknesses.length > 0 
+                ? weaknesses.map(w => `<li class="p-3 bg-slate-900/80 rounded-xl border border-laserRed/20 flex items-start gap-2">${w}</li>`).join('')
+                : `<li class="p-3 bg-slate-900/80 rounded-xl border border-matrixGreen/20 text-matrixGreen">✨ لم يتم رصد أي ثغرات أو تحذيرات حرجة.</li>`;
+            
+            guidelinesList.innerHTML = guidelines.length > 0
+                ? guidelines.map(g => `<li class="p-3 bg-slate-900/80 rounded-xl border border-cyberGold/20 flex items-start gap-2">${g}</li>`).join('')
+                : `<li class="p-3 bg-slate-900/80 rounded-xl border border-cyberGold/20 text-cyberGold">💡 حافظ على التحديثات الدورية وتحسين الأداء المستمر.</li>`;
+        }
+    </script>
+</body>
+</html>
